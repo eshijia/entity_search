@@ -314,14 +314,14 @@ class Evaluator:
 if __name__ == '__main__':
     conf = {
         'type': 'celebrity',
-        'question_len': 5,
-        'answer_len': 5,
+        'question_len': 10,
+        'answer_len': 10,
         'n_words': 52736,  # len(vocabulary) + 1
         'margin': 0.02,
 
         'training_params': {
             'save_every': 1000,
-            # 'eval_every': 1,
+            'eval_every': 100,
             'batch_size': 32,
             'nb_epoch': 3000,
             'validation_split': 0,
