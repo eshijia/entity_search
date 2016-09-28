@@ -11,7 +11,6 @@ import pickle
 import codecs
 from keras.optimizers import RMSprop, Adam
 from scipy.stats import rankdata
-from sklearn.metrics import average_precision_score
 from heapq import nlargest
 from gensim.models import Word2Vec
 
