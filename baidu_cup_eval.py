@@ -172,10 +172,12 @@ class Evaluator:
                 num_candidate = len(sims)
                 ground_rank = num_candidate - target_rank + 1
                 ground_rank.sort()
+                one_ap = 0
                 for rank in xrange(n_good):
-                    ap += (rank + 1) / float(ground_rank[rank])
-                ap /= n_good
+                    one_ap += (rank + 1) / float(ground_rank[rank])
+                one_ap /= n_good
 
+                ap += one_ap
                 h1 += 1 if np.argmax(sims) < n_good else 0
 
                 # max_r = np.argmax(sims)
