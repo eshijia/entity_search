@@ -315,7 +315,7 @@ if __name__ == '__main__':
         'type': 'celebrity',
         'question_len': 10,
         'answer_len': 10,
-        'n_words': 52736,  # len(vocabulary) + 1
+        'n_words': 9841,  # len(vocabulary) + 1
         'margin': 0.02,
 
         'training_params': {
@@ -345,7 +345,7 @@ if __name__ == '__main__':
             # recurrent
             'n_lstm_dims': 141, # * 2
 
-            'initial_embed_weights': np.load('embeddings/celebrity_300_dim.embeddings'),
+            'initial_embed_weights': np.load('embeddings/tvSHow_300_dim.embeddings'),
         },
 
         'similarity_params': {
