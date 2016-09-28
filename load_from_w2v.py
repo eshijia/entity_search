@@ -5,7 +5,7 @@ import os
 import random
 import numpy as np
 
-import pickle
+import cPickle
 
 from gensim.models import Word2Vec
 
@@ -16,7 +16,7 @@ embedding_path = 'embeddings'
 
 
 def load(path, name):
-    return pickle.load(open(os.path.join(path, name), 'rb'))
+    return cPickle.load(open(os.path.join(path, name), 'rb'))
 
 
 def revert(vocab, indices):
