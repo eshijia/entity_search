@@ -160,13 +160,12 @@ class Evaluator:
                     self.prog_bar(i, len(data))
 
                 indices = d['good_answers'] + d['bad_answers']
-                answers = self.pada([self.answers[i] for i in indices])
+                answers = self.pada([self.answers[index] for index in indices])
                 question = self.padq([d['question']] * len(indices))
 
                 n_good = len(d['good_answers'])
                 sims = model.predict([question, answers], batch_size=len(indices)).flatten()
-                print(len(sims))
-                r = rankdata(sims, method='min')
+                r = rankdata(sims, method='ordinal')
 
                 target_rank = np.asarray(r[:n_good])
                 num_candidate = len(sims)
@@ -321,7 +320,7 @@ if __name__ == '__main__':
 
         'training_params': {
             'save_every': 1000,
-            'eval_every': 100,
+            'eval_every': 10,
             'batch_size': 32,
             'nb_epoch': 3000,
             'validation_split': 0,
@@ -331,7 +330,7 @@ if __name__ == '__main__':
 
             'evaluate_all_threshold': {
                 'mode': 'all',
-                'top1': 0.4,
+                'top1': 0.5,
             },
         },
 
