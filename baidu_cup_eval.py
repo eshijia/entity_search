@@ -133,7 +133,7 @@ class Evaluator:
             # print('Best: Loss = {}, Epoch = {}'.format(val_loss['loss'], val_loss['epoch']))
 
             if eval_every is not None and i % eval_every == 0:
-                self.get_mrr(model)
+                self.get_map(model)
 
             if save_every is not None and i % save_every == 0:
                 self.save_epoch(model, i)
