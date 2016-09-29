@@ -7,9 +7,9 @@ import os
 import re
 import cPickle
 
-data_path = 'data'
-serialization_data_path = 'serialization_data'
-jieba.load_userdict('data/dictionary.txt')
+data_path = '../data'
+serialization_data_path = '../serialization_data'
+jieba.load_userdict('../data/dictionary.txt')
 
 if __name__ == '__main__':
 
@@ -29,21 +29,14 @@ if __name__ == '__main__':
     entity_set = codecs.open(os.path.join(data_path, file_class + '.ENTITYSET.txt'), 'rb', 'gb18030')
     test_set = codecs.open(os.path.join(data_path, file_class + '.GROUNDTRUTH.txt'), 'rb', 'gb18030')
 
-    for line in train_set.readlines():
+    for line in train_set.readlines() + test_set.readlines():
         line = line.strip().split('\t')
         query_words = jieba.cut(line[0])
         for query_word in query_words:
             vocab.add(query_word)
-        for term in line[1:]:
-            words = jieba.cut(re.sub(r'[\(\)]', '', ''.join(term.split(':')[:-1])))
-            for word in words:
-                vocab.add(word)
-    for line in test_set.readlines() + entity_set.readlines():
-        line = line.strip().split('\t')
-        for term in line:
-            words = jieba.cut(re.sub(r'[\(\):]', '', term))
-            for word in words:
-                vocab.add(word)
+    for line in entity_set.readlines():
+        line = line.strip()
+        vocab.add(line)
     for i, elem in enumerate(vocab):
         vocabulary[i+1] = elem
     print "Vocabulary: %d" % len(vocabulary)
@@ -57,7 +50,7 @@ if __name__ == '__main__':
     for i, line in enumerate(entity_set.readlines()):
         line = line.strip()
         ans2idx[line] = i
-        answers[i] = [vocab2idx[word] for word in jieba.cut(re.sub(r'[\(\):]', '', line))]
+        answers[i] = [vocab2idx[line]]
     print "Answers: %d" % len(answers)
     print "Answer IDs: %d" % len(ans2idx)
 
@@ -95,17 +88,17 @@ if __name__ == '__main__':
         test.append(temp_dict)
     print "Test samples: %d" % len(test)
 
-    with open(os.path.join(serialization_data_path, file_class + '_vocabulary.pkl'), 'wb') as output_vocab:
+    with open(os.path.join(serialization_data_path, file_class + '_vocabulary_v2.pkl'), 'wb') as output_vocab:
         cPickle.dump(vocabulary, output_vocab, -1)
 
-    with open(os.path.join(serialization_data_path, file_class + '_answers.pkl'), 'wb') as output_answers:
+    with open(os.path.join(serialization_data_path, file_class + '_answers_v2.pkl'), 'wb') as output_answers:
         cPickle.dump(answers, output_answers, -1)
 
-    with open(os.path.join(serialization_data_path, file_class + '_train.pkl'), 'wb') as output_train:
+    with open(os.path.join(serialization_data_path, file_class + '_train_v2.pkl'), 'wb') as output_train:
         cPickle.dump(train, output_train, -1)
 
-    with open(os.path.join(serialization_data_path, file_class + '_ans2idx.pkl'), 'wb') as output_ans2idx:
+    with open(os.path.join(serialization_data_path, file_class + '_ans2idx_v2.pkl'), 'wb') as output_ans2idx:
         cPickle.dump(ans2idx, output_ans2idx, -1)
 
-    with open(os.path.join(serialization_data_path, file_class + '_test.pkl'), 'wb') as output_test:
+    with open(os.path.join(serialization_data_path, file_class + '_test_v2.pkl'), 'wb') as output_test:
         cPickle.dump(test, output_test, -1)

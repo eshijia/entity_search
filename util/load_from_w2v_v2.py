@@ -11,8 +11,8 @@ from gensim.models import Word2Vec
 
 random.seed(42)
 
-serialization_data_path = 'serialization_data'
-embedding_path = 'embeddings'
+serialization_data_path = '../serialization_data'
+embedding_path = '../embeddings'
 
 
 def load(path, name):
@@ -24,12 +24,12 @@ def revert(vocab, indices):
 
 if __name__ == '__main__':
 
-    model = Word2Vec.load_word2vec_format('embeddings/baike_vector.bin', binary=True)
+    model = Word2Vec.load_word2vec_format('../embeddings/baike_vector.bin', binary=True)
 
-    vocab_celebrity = load(serialization_data_path, 'celebrity_vocabulary.pkl')
-    vocab_movie = load(serialization_data_path, 'movie_vocabulary.pkl')
-    vocab_restaurant = load(serialization_data_path, 'restaurant_vocabulary.pkl')
-    vocab_tvShow = load(serialization_data_path, 'tvShow_vocabulary.pkl')
+    vocab_celebrity = load(serialization_data_path, 'celebrity_vocabulary_v2.pkl')
+    vocab_movie = load(serialization_data_path, 'movie_vocabulary_v2.pkl')
+    vocab_restaurant = load(serialization_data_path, 'restaurant_vocabulary_v2.pkl')
+    vocab_tvShow = load(serialization_data_path, 'tvShow_vocabulary_v2.pkl')
     weights = model.syn0
     d = dict([(k, v.index) for k, v in model.vocab.items()])
 
@@ -60,7 +60,7 @@ if __name__ == '__main__':
             continue
         emb_t[i, :] = weights[d[w], :]
 
-    np.save(open('embeddings/celebrity_300_dim.embeddings', 'wb'), emb_c)
-    np.save(open('embeddings/movie_300_dim.embeddings', 'wb'), emb_m)
-    np.save(open('embeddings/restaurant_300_dim.embeddings', 'wb'), emb_r)
-    np.save(open('embeddings/tvShow_300_dim.embeddings', 'wb'), emb_t)
+    np.save(open('../embeddings/celebrity_300_dim_v2.embeddings', 'wb'), emb_c)
+    np.save(open('../embeddings/movie_300_dim_v2.embeddings', 'wb'), emb_m)
+    np.save(open('../embeddings/restaurant_300_dim_v2.embeddings', 'wb'), emb_r)
+    np.save(open('../embeddings/tvShow_300_dim_v2.embeddings', 'wb'), emb_t)
