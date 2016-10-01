@@ -26,7 +26,7 @@ class Evaluator:
         self.conf = dict() if conf is None else conf
         self.params = conf.get('training_params', dict())
         self.type = conf.get('type', None)
-        self.answers = self.load(self.type + '_answers_v2.pkl')
+        self.answers = self.load(self.type + '_answers_v3.pkl')
         self._vocab = None
         self._reverse_vocab = None
         self._eval_sets = None
@@ -38,7 +38,7 @@ class Evaluator:
 
     def vocab(self):
         if self._vocab is None:
-            self._vocab = self.load(self.type + '_vocabulary_v2.pkl')
+            self._vocab = self.load(self.type + '_vocabulary_v3.pkl')
         return self._vocab
 
     def reverse_vocab(self):
@@ -52,11 +52,11 @@ class Evaluator:
     def save_epoch(self, model, epoch):
         if not os.path.exists('models/'):
             os.makedirs('models/')
-        model.save_weights('models/' + self.type + '_weights_epoch_%d_v2.h5' % epoch, overwrite=True)
+        model.save_weights('models/' + self.type + '_weights_epoch_%d_v3.h5' % epoch, overwrite=True)
 
     def load_epoch(self, model, epoch):
-        assert os.path.exists('models/' + self.type + '_weights_epoch_%d_v2.h5' % epoch), 'Weights at epoch %d not found' % epoch
-        model.load_weights('models/' + self.type + '_weights_epoch_%d_v2.h5' % epoch)
+        assert os.path.exists('models/' + self.type + '_weights_epoch_%d_v3.h5' % epoch), 'Weights at epoch %d not found' % epoch
+        model.load_weights('models/' + self.type + '_weights_epoch_%d_v3.h5' % epoch)
 
     ##### Converting / reverting #####
 
@@ -75,8 +75,11 @@ class Evaluator:
     def padq(self, data):
         return self.pad(data, self.conf.get('question_len', None))
 
-    def pada(self, data):
-        return self.pad(data, self.conf.get('answer_len', None))
+    def pade(self, data):
+        return self.pad(data, self.conf.get('entity_len', None))
+
+    def padd(self, data):
+        return self.pad(data, self.conf.get('des_len', None))
 
     def pad(self, data, len=None):
         from keras.preprocessing.sequence import pad_sequences
@@ -94,21 +97,24 @@ class Evaluator:
         nb_epoch = self.params.get('nb_epoch', 10)
         split = self.params.get('validation_split', 0)
 
-        training_set = self.load(self.type + '_train_v2.pkl')
+        training_set = self.load(self.type + '_train_v3.pkl')
 
         questions = list()
-        good_answers = list()
+        good_entities = list()
+        good_descriptions = list()
         bad_answer_candidates = list()
 
         for q in training_set:
             questions += [q['question']] * len(q['good_answers'])
-            good_answers += [self.answers[i] for i in q['good_answers']]
+            good_entities += [self.answers[i]['entity'] for i in q['good_answers']]
+            good_descriptions += [self.answers[i]['des'] for i in q['good_answers']]
             bad_answer_candidates += [q['bad_answers']] * len(q['good_answers'])
 
         questions = self.padq(questions)
-        good_answers = self.pada(good_answers)
+        good_entities = self.pade(good_entities)
+        good_descriptions = self.padd(good_descriptions)
         print("Questions: ", len(questions))
-        print("Good answers: ", len(good_answers))
+        print("Good answers: ", len(good_entities))
 
         val_loss = {'loss': 1., 'epoch': 0}
 
@@ -117,8 +123,10 @@ class Evaluator:
             # bad_answers = good_answers.copy()
             # random.shuffle(bad_answers)
             # bad_answers = self.pada(random.sample(self.answers.values(), len(good_answers)))
-            bad_answers = self.pada([self.answers[random.choice(candidate)] for candidate in bad_answer_candidates])
-            # print("Bad answers: ", len(bad_answers))
+            neg_samples = [random.choice(candidate) for candidate in bad_answer_candidates]
+            bad_entities = self.pade([self.answers[neg_sample]['entity'] for neg_sample in neg_samples])
+            bad_descriptions = self.padd([self.answers[neg_sample]['des'] for neg_sample in neg_samples])
+            # print("Bad answers: ", len(bad_entity_candidates))
 
             # shuffle questions
             # zipped = zip(questions, good_answers)
@@ -127,7 +135,8 @@ class Evaluator:
 
             print('Epoch %d :: ' % i, end='')
             self.print_time()
-            model.fit([questions, good_answers, bad_answers], nb_epoch=1, batch_size=batch_size, validation_split=split)
+            model.fit([good_entities, bad_entities, questions, good_descriptions, bad_descriptions],
+                      nb_epoch=1, batch_size=batch_size, validation_split=split)
 
             # if hist.history['val_loss'][0] < val_loss['loss']:
             #     val_loss = {'loss': hist.history['val_loss'][0], 'epoch': i}
@@ -161,11 +170,12 @@ class Evaluator:
                     self.prog_bar(i, len(data))
 
                 indices = d['good_answers'] + d['bad_answers']
-                answers = self.pada([self.answers[index] for index in indices])
+                entities = self.pade([self.answers[index]['entity'] for index in indices])
+                descriptions = self.padd([self.answers[index]['des'] for index in indices])
                 question = self.padq([d['question']] * len(indices))
 
                 n_good = len(d['good_answers'])
-                sims = model.predict([question, answers], batch_size=len(indices)).flatten()
+                sims = model.predict([entities, question, descriptions], batch_size=len(indices)).flatten()
                 r = rankdata(sims, method='ordinal')
 
                 target_rank = np.asarray(r[:n_good])
@@ -233,7 +243,7 @@ class Evaluator:
 
     def eval_sets(self):
         if self._eval_sets is None:
-            self._eval_sets = dict([(s, self.load(s)) for s in [self.type + '_test_v2.pkl']])
+            self._eval_sets = dict([(s, self.load(s)) for s in [self.type + '_test_v3.pkl']])
         return self._eval_sets
 
     def max_sim(self, left_list, right_list, w2v_model):
@@ -315,8 +325,9 @@ if __name__ == '__main__':
     conf = {
         'type': 'movie',
         'question_len': 8,
-        'answer_len': 1,
-        'n_words': 25458,  # len(vocabulary) + 1
+        'entity_len': 4,
+        'des_len': 2,
+        'n_words': 19644,  # len(vocabulary) + 1
         'margin': 0.02,
 
         'training_params': {
@@ -346,7 +357,7 @@ if __name__ == '__main__':
             # recurrent
             'n_lstm_dims': 141, # * 2
 
-            'initial_embed_weights': np.load('embeddings/movie_300_dim_v2.embeddings'),
+            'initial_embed_weights': np.load('embeddings/movie_300_dim_v3.embeddings'),
         },
 
         'similarity_params': {
