@@ -98,7 +98,8 @@ if __name__ == '__main__':
                 temp_bad_answers.append(':'.join(candidate[:-1]))
         temp_dict['good_answers'] = [ans2idx[ans] for ans in temp_good_answers]
         temp_dict['bad_answers'] = [ans2idx[ans] for ans in temp_bad_answers]
-    print "Test samples: %d" % len(train)
+        test.append(temp_dict)
+    print "Test samples: %d" % len(test)
 
     with open(os.path.join(serialization_data_path, file_class + '_vocabulary_v3.pkl'), 'wb') as output_vocab:
         cPickle.dump(vocabulary, output_vocab, -1)
