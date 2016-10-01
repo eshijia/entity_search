@@ -14,7 +14,7 @@ from scipy.stats import rankdata
 from heapq import nlargest
 from gensim.models import Word2Vec
 
-from keras_models import *
+from keras_models_v3 import *
 
 random.seed(42)
 
