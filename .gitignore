@@ -4,3 +4,4 @@ models/
 .DS_Store
 *.bin
 *.embeddings
+*.png

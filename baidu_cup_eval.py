@@ -141,6 +141,8 @@ class Evaluator:
     ##### Evaluation #####
     def get_map(self, model, evaluate_all=False):
         top1s = list()
+        top5s = list()
+        top10s = list()
         maps = list()
 
         for name, data in self.eval_sets().items():
@@ -153,7 +155,7 @@ class Evaluator:
             if not evaluate_all and 'n_eval' in self.params:
                 data = data[:self.params['n_eval']]
 
-            ap, h1 = 0, 0
+            ap, h1, h5, h10 = 0, 0, 0, 0
 
             for i, d in enumerate(data):
                 if evaluate_all:
@@ -178,6 +180,8 @@ class Evaluator:
 
                 ap += one_ap
                 h1 += 1 if np.argmax(sims) < n_good else 0
+                h5 += 1 if set(list(ground_rank - 1)).intersection(set(range(5))) else 0
+                h10 += 1 if set(list(ground_rank - 1)).intersection(set(range(10))) else 0
 
                 # max_r = np.argmax(sims)
                 # max_n = np.argmax(sims[:n_good])
@@ -190,20 +194,28 @@ class Evaluator:
                 # c_2 += 1 / float(r[max_r] - r[max_n] + 1)
 
             top1 = h1 / float(len(data))
+            top5 = h5 / float(len(data))
+            top10 = h10 / float(len(data))
             mean_ap = ap / float(len(data))
 
             del data
 
             if evaluate_all:
                 print('Top-1 Precision: %f' % top1)
+                print('Hit@5 Precision: %f' % top5)
+                print('Hit@10 Precision: %f' % top10)
                 print('MAP: %f' % mean_ap)
 
             top1s.append(top1)
+            top5s.append(top5)
+            top10s.append(top10)
             maps.append(mean_ap)
 
         # rerun the evaluation if above some threshold
         if not evaluate_all:
             print('Top-1 Precision: {}'.format(top1s))
+            print('Hit@5 Precision: {}'.format(top5s))
+            print('Hit@10 Precision: {}'.format(top10s))
             print('MAP: {}'.format(maps))
             evaluate_all_threshold = self.params.get('evaluate_all_threshold', dict())
             evaluate_mode = evaluate_all_threshold.get('mode', 'all')
@@ -220,7 +232,7 @@ class Evaluator:
             if evaluate_all:
                 return self.get_map(model, evaluate_all=True)
 
-        return top1s, maps
+        return top1s, top5s, top10s, maps
 
     def prog_bar(self, so_far, total, n_bars=20):
         n_complete = int(so_far * n_bars / total)
