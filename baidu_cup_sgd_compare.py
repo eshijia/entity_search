@@ -15,8 +15,10 @@ from heapq import nlargest
 from gensim.models import Word2Vec
 
 from keras_models import *
+import matplotlib.pyplot as plt
 
 random.seed(42)
+
 
 class Evaluator:
     def __init__(self, conf=None):
@@ -25,7 +27,7 @@ class Evaluator:
         self.conf = dict() if conf is None else conf
         self.params = conf.get('training_params', dict())
         self.type = conf.get('type', None)
-        self.answers = self.load(self.type + '_answers.pkl')
+        self.answers = self.load(self.type + '_answers_v2.pkl')
         self._vocab = None
         self._reverse_vocab = None
         self._eval_sets = None
@@ -37,7 +39,7 @@ class Evaluator:
 
     def vocab(self):
         if self._vocab is None:
-            self._vocab = self.load(self.type + '_vocabulary.pkl')
+            self._vocab = self.load(self.type + '_vocabulary_v2.pkl')
         return self._vocab
 
     def reverse_vocab(self):
@@ -51,11 +53,11 @@ class Evaluator:
     def save_epoch(self, model, epoch):
         if not os.path.exists('models/'):
             os.makedirs('models/')
-        model.save_weights('models/' + self.type + '_weights_epoch_%d.h5' % epoch, overwrite=True)
+        model.save_weights('models/' + self.type + '_weights_epoch_%d_v2.h5' % epoch, overwrite=True)
 
     def load_epoch(self, model, epoch):
-        assert os.path.exists('models/' + self.type + '_weights_epoch_%d.h5' % epoch), 'Weights at epoch %d not found' % epoch
-        model.load_weights('models/' + self.type + '_weights_epoch_%d.h5' % epoch)
+        assert os.path.exists('models/' + self.type + '_weights_epoch_%d_v2.h5' % epoch), 'Weights at epoch %d not found' % epoch
+        model.load_weights('models/' + self.type + '_weights_epoch_%d_v2.h5' % epoch)
 
     ##### Converting / reverting #####
 
@@ -87,13 +89,14 @@ class Evaluator:
         print(strftime('%Y-%m-%d %H:%M:%S :: ', gmtime()), end='')
 
     def train(self, model):
+        loss_record = list()
         eval_every = self.params.get('eval_every', None)
         save_every = self.params.get('save_every', None)
         batch_size = self.params.get('batch_size', 128)
         nb_epoch = self.params.get('nb_epoch', 10)
         split = self.params.get('validation_split', 0)
 
-        training_set = self.load(self.type + '_train.pkl')
+        training_set = self.load(self.type + '_train_v2.pkl')
 
         questions = list()
         good_answers = list()
@@ -126,8 +129,8 @@ class Evaluator:
 
             print('Epoch %d :: ' % i, end='')
             self.print_time()
-            model.fit([questions, good_answers, bad_answers], nb_epoch=1, batch_size=batch_size, validation_split=split)
-
+            hist = model.fit([questions, good_answers, bad_answers], nb_epoch=1, batch_size=batch_size, validation_split=split)
+            loss_record.append(hist.history['loss'][0])
             # if hist.history['val_loss'][0] < val_loss['loss']:
             #     val_loss = {'loss': hist.history['val_loss'][0], 'epoch': i}
             # print('Best: Loss = {}, Epoch = {}'.format(val_loss['loss'], val_loss['epoch']))
@@ -137,6 +140,7 @@ class Evaluator:
 
             if save_every is not None and i % save_every == 0:
                 self.save_epoch(model, i)
+        return loss_record
 
     ##### Evaluation #####
     def get_map(self, model, evaluate_all=False):
@@ -232,7 +236,7 @@ class Evaluator:
 
     def eval_sets(self):
         if self._eval_sets is None:
-            self._eval_sets = dict([(s, self.load(s)) for s in [self.type + '_test.pkl']])
+            self._eval_sets = dict([(s, self.load(s)) for s in [self.type + '_test_v2.pkl']])
         return self._eval_sets
 
     def max_sim(self, left_list, right_list, w2v_model):
@@ -312,17 +316,17 @@ class Evaluator:
 
 if __name__ == '__main__':
     conf = {
-        'type': 'tvShow',
-        'question_len': 10,
-        'answer_len': 10,
-        'n_words': 9841,  # len(vocabulary) + 1
+        'type': 'movie',
+        'question_len': 8,
+        'answer_len': 1,
+        'n_words': 25458,  # len(vocabulary) + 1
         'margin': 0.02,
 
         'training_params': {
             'save_every': 1000,
-            'eval_every': 10,
+            # 'eval_every': 10,
             'batch_size': 32,
-            'nb_epoch': 3000,
+            'nb_epoch': 5,
             'validation_split': 0,
             'optimizer': 'adam',
             # 'optimizer': Adam(clip_norm=0.1),
@@ -345,7 +349,7 @@ if __name__ == '__main__':
             # recurrent
             'n_lstm_dims': 141, # * 2
 
-            'initial_embed_weights': np.load('embeddings/tvShow_300_dim.embeddings'),
+            'initial_embed_weights': np.load('embeddings/movie_300_dim_v2.embeddings'),
         },
 
         'similarity_params': {
@@ -360,46 +364,50 @@ if __name__ == '__main__':
 
     ##### Define model ######
     model = EmbeddingModel(conf)
-    optimizer = conf.get('training_params', dict()).get('optimizer', 'adam')
-    model.compile(optimizer=optimizer)
+    model.compile(optimizer='Adam')
+
+    model2 = EmbeddingModel(conf)
+    model2.compile(optimizer='Adagrad')
+
+    model3 = EmbeddingModel(conf)
+    model3.compile(optimizer='SGD')
+
+    model4 = EmbeddingModel(conf)
+    model4.compile(optimizer='RMSprop')
+
+    model5 = EmbeddingModel(conf)
+    model5.compile(optimizer='Adadelta')
 
     import numpy as np
 
-    # save embedding layer
-    # evaluator.load_epoch(model, 33)
-    # embedding_layer = model.prediction_model.layers[2].layers[2]
-    # evaluator.load_epoch(model, 100)
-    # evaluator.train(model)
-    # weights = embedding_layer.get_weights()[0]
-    # np.save(open('models/embedding_1000_dim.h5', 'wb'), weights)
-
     # train the model
-    evaluator.train(model)
-    # evaluate mrr for a particular epoch
-    evaluator.load_epoch(model, 3000)
-    evaluator.get_map(model, evaluate_all=True)
+    target = evaluator.train(model)
+    target2 = evaluator.train(model2)
+    target3 = evaluator.train(model3)
+    target4 = evaluator.train(model4)
+    target5 = evaluator.train(model5)
 
-    # celebrity
-    # evaluator.load_epoch(model, 3000)
-    # dev_set = codecs.open('data/celebrity.TESTSET.txt', 'rb', 'gb18030')
-    # submit = codecs.open('data/celebrity-final-v1.txt', 'wb', 'gb18030')
-    # wor2vec_model = Word2Vec.load_word2vec_format('data/baike_vector.bin', binary=True)
-    # evaluator.make_submit_v2(model, dev_set, submit, wor2vec_model)
+    plt.figure(1)
 
-    # movie
-    # evaluator.load_epoch(model, 3000)
-    # dev_set = codecs.open('data/movie.TESTSET.txt', 'rb', 'gb18030')
-    # submit = codecs.open('data/movie-final-v1.txt', 'wb', 'gb18030')
-    # evaluator.make_submit(model, dev_set, submit)
+    axes = plt.gca()
+    x_min = 1
+    x_max = len(target)
+    axes.set_xlim([x_min, x_max])
+    axes.set_xticks(np.linspace(x_min, x_max, x_max))
 
-    # restaurant
-    # evaluator.load_epoch(model, 3000)
-    # dev_set = codecs.open('data/restaurant.TESTSET.txt', 'rb', 'gb18030')
-    # submit = codecs.open('data/restaurant-final-v1.txt', 'wb', 'gb18030')
-    # evaluator.make_submit(model, dev_set, submit)
-
-    # tvShow
-    # evaluator.load_epoch(model, 3000)
-    # dev_set = codecs.open('data/tvShow.TESTSET.txt', 'rb', 'gb18030')
-    # submit = codecs.open('data/tvShow-final-v1.txt', 'wb', 'gb18030')
-    # evaluator.make_submit(model, dev_set, submit)
+    plt.scatter(np.arange(1, len(target) + 1), np.asarray(target), color='g', s=10)
+    plt.scatter(np.arange(1, len(target2) + 1), np.asarray(target2), color='b', s=10)
+    plt.scatter(np.arange(1, len(target3) + 1), np.asarray(target3), color='r', s=10)
+    plt.scatter(np.arange(1, len(target4) + 1), np.asarray(target4), color='y', s=10)
+    plt.scatter(np.arange(1, len(target5) + 1), np.asarray(target5), color='k', s=10)
+    plt.plot(np.arange(1, len(target) + 1), np.asarray(target), color='g', label='Adam')
+    plt.plot(np.arange(1, len(target2) + 1), np.asarray(target2), color='b', label='Adagrad')
+    plt.plot(np.arange(1, len(target3) + 1), np.asarray(target3), color='r', label='SGD')
+    plt.plot(np.arange(1, len(target4) + 1), np.asarray(target4), color='y', label='RMSprop')
+    plt.plot(np.arange(1, len(target5) + 1), np.asarray(target5), color='k', label='Adadelta')
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.title('Training Loss vs Epochs')
+    plt.legend(loc=0)
+    # plt.show()
+    plt.savefig('figure4.png')
