@@ -15,6 +15,8 @@ from heapq import nlargest
 from gensim.models import Word2Vec
 
 from keras_models import *
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 random.seed(42)
@@ -326,7 +328,7 @@ if __name__ == '__main__':
             'save_every': 1000,
             # 'eval_every': 10,
             'batch_size': 32,
-            'nb_epoch': 5,
+            'nb_epoch': 100,
             'validation_split': 0,
             'optimizer': 'adam',
             # 'optimizer': Adam(clip_norm=0.1),
@@ -349,7 +351,7 @@ if __name__ == '__main__':
             # recurrent
             'n_lstm_dims': 141, # * 2
 
-            'initial_embed_weights': np.load('embeddings/movie_300_dim_v2.embeddings'),
+            # 'initial_embed_weights': np.load('embeddings/movie_300_dim_v2.embeddings'),
         },
 
         'similarity_params': {
@@ -393,7 +395,7 @@ if __name__ == '__main__':
     x_min = 1
     x_max = len(target)
     axes.set_xlim([x_min, x_max])
-    axes.set_xticks(np.linspace(x_min, x_max, x_max))
+    axes.set_xticks(np.linspace(x_min, x_max, 10))
 
     plt.scatter(np.arange(1, len(target) + 1), np.asarray(target), color='g', s=10)
     plt.scatter(np.arange(1, len(target2) + 1), np.asarray(target2), color='b', s=10)
@@ -408,6 +410,6 @@ if __name__ == '__main__':
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
     plt.title('Training Loss vs Epochs')
-    plt.legend(loc=0)
+    plt.legend(loc=0, fontsize='x-small')
     # plt.show()
     plt.savefig('figure4.png')
