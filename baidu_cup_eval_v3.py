@@ -154,7 +154,6 @@ class Evaluator:
         top5s = list()
         top10s = list()
         maps = list()
-
         for name, data in self.eval_sets().items():
             if evaluate_all:
                 self.print_time()
@@ -172,11 +171,12 @@ class Evaluator:
                     self.prog_bar(i, len(data))
 
                 indices = d['good_answers'] + d['bad_answers']
-                answers = self.pada([self.answers[index] for index in indices])
+                entities = self.pade([self.answers[index]['entity'] for index in indices])
+                descriptions = self.padd([self.answers[index]['des'] for index in indices])
                 question = self.padq([d['question']] * len(indices))
 
                 n_good = len(d['good_answers'])
-                sims = model.predict([question, answers], batch_size=len(indices)).flatten()
+                sims = model.predict([entities, question, descriptions], batch_size=len(indices)).flatten()
                 r = rankdata(sims, method='ordinal')
 
                 target_rank = np.asarray(r[:n_good])
@@ -334,11 +334,11 @@ class Evaluator:
 
 if __name__ == '__main__':
     conf = {
-        'type': 'movie',
+        'type': 'tvShow',
         'question_len': 8,
         'entity_len': 4,
         'des_len': 2,
-        'n_words': 19644,  # len(vocabulary) + 1
+        'n_words': 9843,  # len(vocabulary) + 1
         'margin': 0.02,
 
         'training_params': {
@@ -368,7 +368,7 @@ if __name__ == '__main__':
             # recurrent
             'n_lstm_dims': 141, # * 2
 
-            'initial_embed_weights': np.load('embeddings/movie_300_dim_v3.embeddings'),
+            'initial_embed_weights': np.load('embeddings/tvShow_300_dim_v3.embeddings'),
         },
 
         'similarity_params': {
