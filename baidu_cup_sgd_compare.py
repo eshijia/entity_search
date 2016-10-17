@@ -395,7 +395,7 @@ if __name__ == '__main__':
     x_min = 0
     x_max = len(target)
     axes.set_xlim([x_min, x_max])
-    axes.set_xticks(np.linspace(x_min, x_max, 10))
+    axes.set_xticks(np.linspace(x_min, x_max, 11))
 
     # plt.scatter(np.arange(1, len(target) + 1), np.asarray(target), color='g', s=10)
     # plt.scatter(np.arange(1, len(target2) + 1), np.asarray(target2), color='b', s=10)
@@ -409,7 +409,7 @@ if __name__ == '__main__':
     plt.plot(np.arange(1, len(target5) + 1), np.asarray(target5), color='k', label='Adadelta')
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
-    plt.title('Training Loss vs Epochs')
+    plt.title('Training loss vs. Epochs')
     plt.legend(loc=0, fontsize='x-small')
     # plt.show()
     plt.savefig('figure4.png')
