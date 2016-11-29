@@ -155,7 +155,7 @@ class EmbeddingModel(LanguageModel):
         embedding = Embedding(input_dim=self.config['n_words'],
                               output_dim=self.model_params.get('n_embed_dims', 100),
                               # W_constraint=constraints.nonneg(),
-                              trainable=False,
+                              trainable=True,
                               weights=weights,
                               mask_zero=True)
         question_embedding = embedding(question)

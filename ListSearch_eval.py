@@ -90,9 +90,20 @@ class Evaluator:
         split = self.params.get('validation_split', 0)
 
         dataset = self.load('ListSearch_train.pkl')
+        test_set = self.load('ListSearch_test.pkl')
+        query2id = self.load('ListSearch_query2id.pkl')
         raw_sets = [dataset[i: i+5] for i in range(0, len(dataset), 5)]
         training_set = raw_sets[0] + raw_sets[1] + raw_sets[2] + raw_sets[3]
-        self._eval_sets = dict([('ListSearch', raw_sets[4])])
+        eval_sets = []
+        for sample in raw_sets[4]:
+            test_sample = dict()
+            test_query = sample['query']
+            test_query_id = query2id[' '.join([self._vocab[idx] for idx in test_query])]
+            test_sample.update(query=test_query,
+                               good_answers=test_set[test_query_id]['good_answers'],
+                               bad_answers=test_set[test_query_id]['bad_answers'])
+            eval_sets.append(test_sample)
+        self._eval_sets = dict([('ListSearch', eval_sets)])
 
         questions = list()
         good_answers = list()
