@@ -23,7 +23,7 @@ class Evaluator:
         self.conf = dict() if conf is None else conf
         self.params = conf.get('training_params', dict())
         self.answers = self.load('ListSearch_answers.pkl')
-        self._vocab = None
+        self._vocab = self.load('ListSearch_vocabulary.pkl')
         self._reverse_vocab = None
         self._eval_sets = None
 
