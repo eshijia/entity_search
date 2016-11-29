@@ -88,4 +88,14 @@
 - Train samples: 100
 - Test samples: 1000
 
+### INEX_LD
+- Vocabulary: 14162
 
+### QALD2
+- Vocabulary: 20212
+
+### SemSearch_ES
+- Vocabulary: 12456
+
+### ListSearch
+- Vocabulary: 15061
