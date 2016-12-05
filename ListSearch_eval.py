@@ -329,7 +329,7 @@ if __name__ == '__main__':
             'print_answers': False,
             'save_every': 1,
             'batch_size': 64,
-            'nb_epoch': 50,
+            'nb_epoch': 100,
             'validation_split': 0,
             'optimizer': 'adam',
         },
@@ -375,7 +375,7 @@ if __name__ == '__main__':
     evaluator.train(model)
 
     # evaluate mrr for a particular epoch
-    evaluator.load_epoch(model, 50)
+    evaluator.load_epoch(model, 100)
     # evaluator.load_epoch(model, 31)
     evaluator.get_map(model, evaluate_all=True)
     # for epoch in range(1, 100):
