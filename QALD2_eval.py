@@ -201,8 +201,8 @@ class Evaluator:
                         one_p10 += 1
                     if rank <= 20:
                         one_p20 += 1
-                one_p10 /= 10
-                one_p20 /= 20
+                one_p10 /= 10.0
+                one_p20 /= 20.0
                 p10 += one_p10
                 p20 += one_p20
 
