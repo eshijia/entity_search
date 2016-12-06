@@ -166,7 +166,7 @@ class Evaluator:
             if not evaluate_all and 'n_eval' in self.params:
                 data = data[:self.params['n_eval']]
 
-            ap, h1, h10, h20 = 0, 0, 0, 0
+            ap, h1, h10, h20, p10, p20 = 0, 0, 0, 0, 0, 0
 
             for i, d in enumerate(data):
                 if evaluate_all:
@@ -194,6 +194,18 @@ class Evaluator:
                 h10 += 1 if set(list(ground_rank - 1)).intersection(set(range(10))) else 0
                 h20 += 1 if set(list(ground_rank - 1)).intersection(set(range(20))) else 0
 
+                one_p10 = 0
+                one_p20 = 0
+                for rank in ground_rank:
+                    if rank <= 10:
+                        one_p10 += 1
+                    if rank <= 20:
+                        one_p20 += 1
+                one_p10 /= 10
+                one_p20 /= 20
+                p10 += one_p10
+                p20 += one_p20
+
                 # max_r = np.argmax(sims)
                 # max_n = np.argmax(sims[:n_good])
 
@@ -208,6 +220,8 @@ class Evaluator:
             top10 = h10 / float(len(data))
             top20 = h20 / float(len(data))
             mean_ap = ap / float(len(data))
+            p_at_10 = p10 / float(len(data))
+            p_at_20 = p20 / float(len(data))
 
             del data
 
@@ -216,6 +230,8 @@ class Evaluator:
                 print('Hit@10 Precision: %f' % top10)
                 print('Hit@20 Precision: %f' % top20)
                 print('MAP: %f' % mean_ap)
+                print('P@10: %f' % p_at_10)
+                print('P@20: %f' % p_at_20)
 
             top1s.append(top1)
             top10s.append(top10)
